@@ -443,6 +443,49 @@
       font-weight: 600;
     }
 
+    /* ─── 로그인 오버레이 ─── */
+    #loginOverlay {
+      position: fixed; inset: 0; z-index: 99999;
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #loginBox {
+      background: white; border-radius: 20px; padding: 40px 36px;
+      width: 340px; max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      text-align: center;
+    }
+    #loginBox h1 { font-size: 18px; font-weight: 800; color: #0f3460; margin-bottom: 4px; }
+    #loginBox p  { font-size: 12px; color: #9ca3af; margin-bottom: 24px; }
+    #loginPwInput {
+      width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; font-size: 14px; box-sizing: border-box;
+      outline: none; transition: border-color .2s; font-family: inherit;
+    }
+    #loginPwInput:focus { border-color: #0f3460; }
+    #loginBtn {
+      margin-top: 12px; width: 100%; padding: 13px;
+      background: #0f3460; color: white; border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: background .2s;
+    }
+    #loginBtn:hover { background: #1a4a80; }
+    #loginError { color: #ef4444; font-size: 12px; margin-top: 8px; display: none; }
+
+    /* ─── 관리자 전용 요소 (비관리자 로그인 시 숨김) ─── */
+    .admin-only { display: none !important; }
+    body.is-admin .admin-only { display: inline-block !important; }
+
+    /* ─── 삭제 버튼 ─── */
+    .btn-admin-del {
+      padding: 3px 8px; background: #fee2e2; color: #dc2626;
+      border: 1px solid #fca5a5; border-radius: 6px;
+      font-size: 10px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; font-family: inherit;
+      transition: background .15s;
+    }
+    .btn-admin-del:hover { background: #dc2626; color: white; }
+
     /* ─── 주유소 목록 탭 ─── */
     .stations-tab {
       padding: 12px;
@@ -1275,16 +1318,28 @@
 
 <body>
 
+  <!-- ── 로그인 오버레이 ── -->
+  <div id="loginOverlay">
+    <div id="loginBox">
+      <h1>⛽ KD운송그룹</h1>
+      <p>자가주유소 관리시스템</p>
+      <input id="loginPwInput" type="password" placeholder="비밀번호를 입력하세요"
+        onkeydown="if(event.key==='Enter') _doLogin()" autocomplete="current-password" />
+      <button id="loginBtn" onclick="_doLogin()">확인</button>
+      <div id="loginError">비밀번호가 올바르지 않습니다.</div>
+    </div>
+  </div>
+
   <!-- 헤더 -->
   <div class="header">
     <div>
       <h1>⛽ 자가주유소 현황 및 누출검사 관리시스템</h1>
       <div class="subtitle">KD운송그룹 자가주유소 현황 및 2026~2036 검사일정 관리</div>
     </div>
-    <div class="data-btns">
+    <div class="data-btns" id="headerAdminBtns">
       <button class="btn-export" onclick="exportExcel()" title="검사기록·메모를 엑셀(CSV)로 저장">📊 엑셀 내보내기</button>
-      <button class="btn-export" onclick="exportData()" title="전체 백업 JSON 저장">💾 전체백업</button>
-      <div class="btn-import-wrap">
+      <button class="btn-export admin-only" onclick="exportData()" title="전체 백업 JSON 저장">💾 전체백업</button>
+      <div class="btn-import-wrap admin-only">
         <button class="btn-export" title="백업 JSON으로 복원">📂 복원</button>
         <input type="file" accept=".json" onchange="importData(event)" />
       </div>
@@ -1578,6 +1633,7 @@
               <th>정기검사 월</th>
               <th>충전대수 (자가)</th>
               <th>길안내</th>
+              <th id="cngDelTh" style="display:none">삭제</th>
             </tr>
           </thead>
           <tbody id="cngTableBody"></tbody>
@@ -1603,6 +1659,7 @@
                   <th>연락처</th>
                   <th>거래처명</th>
                   <th>정산주기</th>
+                  <th id="extCngDelTh" style="display:none">삭제</th>
                 </tr>
               </thead>
               <tbody id="extCngTableBody"></tbody>
@@ -1647,7 +1704,7 @@
           <button onclick="fetchH2RtData(true)" id="btnH2Rt"
             style="padding:6px 12px;background:#0f3460;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">⚡
             실시간 조회</button>
-          <button onclick="fetchPhonesFromKakao('hydrogen')" id="btnFetchH"
+          <button onclick="fetchPhonesFromKakao('hydrogen')" id="btnFetchH" class="admin-only"
             style="padding:6px 12px;background:#f59e0b;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📞
             연락처 자동조회</button>
           <button onclick="exportTabCsv('hydrogen')"
@@ -1677,7 +1734,8 @@
               <th style="min-width:130px">⚡ 실시간 현황 <span id="h2RtTime"
                   style="font-weight:400;color:#9ca3af;font-size:10px"></span></th>
               <th>길안내</th>
-              <th>편집</th>
+              <th id="hydrogenEditTh" style="display:none">편집</th>
+              <th id="hydrogenDelTh" style="display:none">삭제</th>
             </tr>
           </thead>
           <tbody id="hydrogenTableBody"></tbody>
@@ -1693,7 +1751,7 @@
         <h2>🚗 외부주유소 현황 (78개소)</h2>
         <span style="font-size:11px;color:#aaa">현금·카드 거래 외부주유소 · ERP 등록 기준</span>
         <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-          <button onclick="fetchPhonesFromKakao('extgas')" id="btnFetchE"
+          <button onclick="fetchPhonesFromKakao('extgas')" id="btnFetchE" class="admin-only"
             style="padding:6px 12px;background:#f59e0b;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📞
             연락처 자동조회</button>
           <button onclick="exportTabCsv('extgas')"
@@ -1728,7 +1786,8 @@
               <th>정산 주기</th>
               <th>사용여부</th>
               <th>길안내</th>
-              <th>편집</th>
+              <th id="extgasEditTh" style="display:none">편집</th>
+              <th id="extgasDelTh" style="display:none">삭제</th>
             </tr>
           </thead>
           <tbody id="extgasTableBody"></tbody>
@@ -2897,7 +2956,7 @@
             <span class="corp-tag">${s.corp}</span>
             ${s.hub ? `<span class="corp-tag" style="background:#e8f0ff;color:#0f3460">${s.hub}</span>` : ''}
           </div>
-          <button onclick="openStationNotes('${s.office}')" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;background:${hasNotes ? '#0f3460' : 'white'};color:${hasNotes ? 'white' : '#666'};font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0" title="메모/서류 편집">✏️${hasNotes ? ' 📎' : ''}</button>
+          ${_isAdmin ? `<button onclick="openStationNotes('${s.office}')" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;background:${hasNotes ? '#0f3460' : 'white'};color:${hasNotes ? 'white' : '#666'};font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0" title="메모/서류 편집">✏️${hasNotes ? ' 📎' : ''}</button>` : (hasNotes ? `<span style="font-size:10px;color:#0f3460">📎</span>` : '')}
         </div>
         <div onclick="showStationModal(${s.num})" style="cursor:pointer">
           <div class="detail"><span class="icon">📍</span>${s.address}</div>
@@ -3046,7 +3105,7 @@
     ${s.note ? `<div class="row"><span class="key">비고</span><span class="val" style="color:#e94560">${s.note}</span></div>` : ''}
     ${stNotesHtml}
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-edit-station" onclick="openStationNotes('${s.office}'); closeModalDirect();">✏️ 메모 / 서류 편집</button>
+      ${_isAdmin ? `<button class="btn-edit-station" onclick="openStationNotes('${s.office}'); closeModalDirect();">✏️ 메모 / 서류 편집</button>` : ''}
       ${s.lat ? `<button class="btn-edit-station" style="background:#16a34a" onclick="openKakaoNavi(${s.lat},${s.lng},'${s.office}')">🗺️ 카카오내비 길안내</button>` : ''}
     </div>
     ${schedsHtml}
@@ -3329,6 +3388,51 @@
     }
 
     // ═══════════════════════════════════
+    //  로그인 / 관리자 삭제
+    // ═══════════════════════════════════
+    const _LOGIN_PW  = '6237';         // 앱 진입 비밀번호
+    const _ADMIN_PW  = '@a25368237';   // 삭제/편집 관리자 비밀번호
+    let _isAdmin = false;
+    let _deletedCodes = new Set(JSON.parse(localStorage.getItem('_kdDeleted') || '[]'));
+
+    function _saveDeletedCodes() {
+      localStorage.setItem('_kdDeleted', JSON.stringify([..._deletedCodes]));
+    }
+
+    function _doLogin() {
+      const input = document.getElementById('loginPwInput');
+      if (input.value === _LOGIN_PW || input.value === _ADMIN_PW) {
+        _isAdmin = (input.value === _ADMIN_PW);
+        sessionStorage.setItem('_kdLoggedIn', _isAdmin ? 'admin' : '1');
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('loginError').style.display = 'none';
+        if (_isAdmin) document.body.classList.add('is-admin');
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    function _initLogin() {
+      const saved = sessionStorage.getItem('_kdLoggedIn');
+      if (saved) {
+        _isAdmin = (saved === 'admin');
+        document.getElementById('loginOverlay').style.display = 'none';
+        if (_isAdmin) document.body.classList.add('is-admin');
+      } else {
+        document.getElementById('loginPwInput').focus();
+      }
+    }
+
+    function _adminDeleteItem(code, name, rerenderFn) {
+      if (!confirm(`"${name}"을(를) 목록에서 숨기겠습니까?\n복원하려면 브라우저 localStorage에서 _kdDeleted를 삭제하세요.`)) return;
+      _deletedCodes.add(String(code));
+      _saveDeletedCodes();
+      rerenderFn();
+    }
+
+    // ═══════════════════════════════════
     //  카카오맵 로드
     // ═══════════════════════════════════
     // 경기버스정보 OpenAPI 키
@@ -3605,8 +3709,12 @@
     function renderCNG() {
       const tbody = document.getElementById('cngTableBody');
       if (!tbody) return;
+      const delTh = document.getElementById('cngDelTh');
+      if (delTh) delTh.style.display = _isAdmin ? '' : 'none';
       // 충전대수 내림차순 정렬
-      const sorted = [...CNG_STATIONS].sort((a, b) => (b.vehicles || 0) - (a.vehicles || 0));
+      const sorted = [...CNG_STATIONS]
+        .filter(c => !_deletedCodes.has('CNG_' + c.num))
+        .sort((a, b) => (b.vehicles || 0) - (a.vehicles || 0));
       tbody.innerHTML = sorted.map((c, i) => {
         const notes = JSON.parse(localStorage.getItem('cng_notes_' + c.name) || '{}');
         const hasDocs = notes.docs && notes.docs.length > 0;
@@ -3633,6 +3741,7 @@
           <td><span class="cng-period">${c.check_period}</span></td>
           <td style="min-width:160px">${totalBadge}</td>
           <td><button onclick="openKakaoNavi(${c.lat},${c.lng},'${c.name}')" style="padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">🗺️ 내비</button></td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button class="btn-admin-del" onclick="_adminDeleteItem('CNG_${c.num}','${c.name.replace(/'/g, '')}',renderCNG)">삭제</button>` : ''}</td>
         </tr>`;
       }).join('');
     }
@@ -3643,6 +3752,7 @@
     let _stationNotesPendingFiles = []; // {name, dataUrl}
 
     function openStationNotes(office) {
+      if (!_isAdmin) { showToast('⛔ 관리자만 편집할 수 있습니다.'); return; }
       // CNG: office 앞에 __cng__ 접두어로 구분
       const isCng = office.startsWith('__cng__');
       const realName = isCng ? office.replace('__cng__', '') : office;
@@ -3818,7 +3928,12 @@
         });
       }
 
+      const delTh = document.getElementById('hydrogenDelTh');
+      if (delTh) delTh.style.display = _isAdmin ? '' : 'none';
+      const editTh = document.getElementById('hydrogenEditTh');
+      if (editTh) editTh.style.display = _isAdmin ? '' : 'none';
       const filtered = HYDROGEN_STATIONS.filter(s => {
+        if (_deletedCodes.has('H_' + s.code)) return false;
         const matchQ = !q || s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q);
         const matchS = !settle || s.settle === settle;
         return matchQ && matchS;
@@ -3847,7 +3962,8 @@
           <td>${active ? '<span style="color:#16a34a;font-weight:700">사용</span>' : '<span style="color:#9ca3af">미사용</span>'}</td>
           <td style="font-size:11px;min-width:130px">${rtCell}</td>
           <td><button onclick="${naviCall}" style="padding:3px 9px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap">🗺️ 내비</button></td>
-          <td><button onclick="openStationEdit('H','${s.code}')" style="padding:3px 9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">✏️</button></td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button onclick="openStationEdit('H','${s.code}')" style="padding:3px 9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">✏️</button>` : ''}</td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button class="btn-admin-del" onclick="_adminDeleteItem('H_${s.code}','${name.replace(/'/g, '')}',renderHydrogen)">삭제</button>` : ''}</td>
         </tr>`;
       }).join('');
     }
@@ -3874,7 +3990,12 @@
         });
       }
 
+      const delTh = document.getElementById('extgasDelTh');
+      if (delTh) delTh.style.display = _isAdmin ? '' : 'none';
+      const editTh = document.getElementById('extgasEditTh');
+      if (editTh) editTh.style.display = _isAdmin ? '' : 'none';
       const filtered = EXT_GAS_STATIONS.filter(s => {
+        if (_deletedCodes.has('G_' + s.code)) return false;
         const matchQ = !q || s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q);
         const matchS = !settle || s.settle_type.includes(settle);
         const matchP = !settlePeriod || s.settle === settlePeriod;
@@ -3903,7 +4024,8 @@
           <td style="white-space:nowrap;font-size:11px">${settle || '-'}</td>
           <td>${active ? '<span style="color:#16a34a;font-weight:700">사용</span>' : '<span style="color:#9ca3af">미사용</span>'}</td>
           <td><button onclick="${naviCall}" style="padding:3px 9px;background:#ea580c;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap">🗺️ 내비</button></td>
-          <td><button onclick="openStationEdit('G','${s.code}')" style="padding:3px 9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">✏️</button></td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button onclick="openStationEdit('G','${s.code}')" style="padding:3px 9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">✏️</button>` : ''}</td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button class="btn-admin-del" onclick="_adminDeleteItem('G_${s.code}','${name.replace(/'/g, '')}',renderExtGas)">삭제</button>` : ''}</td>
         </tr>`;
       }).join('');
     }
@@ -3927,7 +4049,10 @@
     function renderExtCngList() {
       const tbody = document.getElementById('extCngTableBody');
       if (!tbody) return;
-      tbody.innerHTML = EXT_CNG_STATIONS.map((s, i) => `
+      const delTh = document.getElementById('extCngDelTh');
+      if (delTh) delTh.style.display = _isAdmin ? '' : 'none';
+      const list = EXT_CNG_STATIONS.filter(s => !_deletedCodes.has('ECNG_' + s.code));
+      tbody.innerHTML = list.map((s, i) => `
         <tr>
           <td style="color:#9ca3af">${i + 1}</td>
           <td><strong>${s.name}</strong></td>
@@ -3936,6 +4061,7 @@
           <td style="font-size:11px;white-space:nowrap">${s.phone}</td>
           <td style="font-size:11px">${s.partner}</td>
           <td style="white-space:nowrap;font-size:11px">${s.settle}</td>
+          <td style="display:${_isAdmin ? '' : 'none'}">${_isAdmin ? `<button class="btn-admin-del" onclick="_adminDeleteItem('ECNG_${s.code}','${s.name.replace(/'/g, '')}',renderExtCngList)">삭제</button>` : ''}</td>
         </tr>`).join('');
     }
 
@@ -4054,7 +4180,7 @@
           ${docsHtml}
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-edit-station" onclick="openStationNotes('__cng__${c.name}'); closeModalDirect();">✏️ 메모 / 서류 편집</button>
+          ${_isAdmin ? `<button class="btn-edit-station" onclick="openStationNotes('__cng__${c.name}'); closeModalDirect();">✏️ 메모 / 서류 편집</button>` : ''}
           <button class="btn-edit-station" style="background:#16a34a" onclick="openKakaoNavi(${c.lat},${c.lng},'${c.name}')">🗺️ 카카오내비 길안내</button>
         </div>`;
       document.getElementById('modalBg').classList.add('open');
@@ -4096,6 +4222,7 @@
 
     // ── 편집 모달 열기 ──
     function openStationEdit(prefix, code) {
+      if (!_isAdmin) { showToast('⛔ 관리자만 편집할 수 있습니다.'); return; }
       const arr = prefix === 'H' ? HYDROGEN_STATIONS : EXT_GAS_STATIONS;
       const s = arr.find(x => x.code === code);
       if (!s) return;
@@ -5061,6 +5188,7 @@
 
     /* ── JSON 가져오기 (전체 복원) ── */
     function importData(event) {
+      if (!_isAdmin) { showToast('⛔ 관리자만 복원할 수 있습니다.'); return; }
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -5086,6 +5214,7 @@
     //  초기화
     // ═══════════════════════════════════
     window.addEventListener('DOMContentLoaded', function () {
+      _initLogin();
       initCorpFilter();
       renderDashboard();
       renderStations();
