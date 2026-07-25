@@ -472,6 +472,43 @@
     #loginBtn:hover { background: #1a4a80; }
     #loginError { color: #ef4444; font-size: 12px; margin-top: 8px; display: none; }
 
+    /* ─── + 추가 버튼 ─── */
+    .btn-add-item {
+      padding: 6px 14px; background: #0f3460; color: white;
+      border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: background .2s;
+      display: none; /* admin-only로 JS에서 제어 */
+    }
+    .btn-add-item:hover { background: #1a4a80; }
+
+    /* ─── 추가 모달 ─── */
+    #addItemOverlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.55); align-items: center; justify-content: center;
+    }
+    #addItemOverlay.open { display: flex; }
+    #addItemBox {
+      background: white; border-radius: 16px; padding: 28px 24px;
+      width: 520px; max-width: 96vw; max-height: 88vh;
+      overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.3);
+    }
+    #addItemBox h2 { font-size: 15px; font-weight: 800; color: #0f3460; margin-bottom: 16px; }
+    .add-form-row { margin-bottom: 12px; }
+    .add-form-row label { display: block; font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 4px; }
+    .add-form-row input, .add-form-row select, .add-form-row textarea {
+      width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; font-size: 13px; box-sizing: border-box;
+      font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    .add-form-row input:focus, .add-form-row select:focus, .add-form-row textarea:focus { border-color: #0f3460; }
+    .add-form-row textarea { min-height: 60px; resize: vertical; }
+    .add-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .add-form-btns { display: flex; gap: 8px; margin-top: 16px; }
+    .add-form-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .add-form-btns .btn-save { background: #0f3460; color: white; }
+    .add-form-btns .btn-cancel { background: #f3f4f6; color: #374151; }
+
     /* ─── 관리자 전용 요소 (비관리자 로그인 시 숨김) ─── */
     .admin-only { display: none !important; }
     body.is-admin .admin-only { display: inline-block !important; }
@@ -1602,8 +1639,9 @@
         <select id="corpFilter" onchange="renderStations()">
           <option value="">전체 법인</option>
         </select>
+        <button id="btnAddStation" class="btn-add-item" onclick="_openAddModal('station')">➕ 자가주유소 추가</button>
         <button onclick="exportTabCsv('stations')"
-          style="margin-left:auto;padding:6px 12px;background:#0f3460;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap">📥
+          style="padding:6px 12px;background:#0f3460;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap">📥
           엑셀 내보내기</button>
       </div>
       <div class="station-grid" id="stationGrid"></div>
@@ -1616,8 +1654,9 @@
       <div class="cng-header">
         <h2>⚡ KD그룹 CNG 충전소 현황 (16개소)</h2>
         <span style="font-size:11px;color:#aaa">2021.07 기준 · 충전대수: 자가차량 기준 · 정기검사: 개시일 기준 6개월마다</span>
+        <button id="btnAddCNG" class="btn-add-item" onclick="_openAddModal('cng')" style="margin-left:auto">➕ CNG 추가</button>
         <button onclick="exportTabCsv('cng')"
-          style="margin-left:auto;padding:6px 12px;background:#16a34a;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📥
+          style="padding:6px 12px;background:#16a34a;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📥
           엑셀 내보내기</button>
       </div>
       <div class="cng-table-wrap">
@@ -1642,10 +1681,12 @@
 
       <!-- 외부 CNG충전소 목록 -->
       <div style="margin-top:24px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer"
-          onclick="toggleExtCngSection()">
-          <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0">🏢 외부 CNG충전소 목록 (ERP 등록 28개소)</h3>
-          <span id="extCngToggleIcon" style="font-size:12px;color:#6b7280">▼ 펼치기</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1" onclick="toggleExtCngSection()">
+            <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0">🏢 외부 CNG충전소 목록 (ERP 등록 28개소)</h3>
+            <span id="extCngToggleIcon" style="font-size:12px;color:#6b7280">▼ 펼치기</span>
+          </div>
+          <button id="btnAddExtCNG" class="btn-add-item" onclick="_openAddModal('extcng')">➕ 외부CNG 추가</button>
         </div>
         <div id="extCngSection" style="display:none">
           <div class="cng-table-wrap">
@@ -1707,6 +1748,7 @@
           <button onclick="fetchPhonesFromKakao('hydrogen')" id="btnFetchH" class="admin-only"
             style="padding:6px 12px;background:#f59e0b;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📞
             연락처 자동조회</button>
+          <button id="btnAddHydrogen" class="btn-add-item" onclick="_openAddModal('hydrogen')">➕ 수소충전소 추가</button>
           <button onclick="exportTabCsv('hydrogen')"
             style="padding:6px 12px;background:#0ea5e9;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📥
             엑셀 내보내기</button>
@@ -1754,6 +1796,7 @@
           <button onclick="fetchPhonesFromKakao('extgas')" id="btnFetchE" class="admin-only"
             style="padding:6px 12px;background:#f59e0b;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📞
             연락처 자동조회</button>
+          <button id="btnAddExtGas" class="btn-add-item" onclick="_openAddModal('extgas')">➕ 외부주유소 추가</button>
           <button onclick="exportTabCsv('extgas')"
             style="padding:6px 12px;background:#ea580c;color:white;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600">📥
             엑셀 내보내기</button>
@@ -3166,6 +3209,7 @@
     let _pendingFile = null; // { name, size, type, dataUrl }
 
     function openCompleteModal(recordKey, office, type, checkDate) {
+      if (!_isAdmin) { showToast('⛔ 관리자만 완료 표기를 할 수 있습니다.'); return; }
       const existing = INSPECTION_RECORDS[recordKey];
       document.getElementById('completeRecordKey').value = recordKey;
       document.getElementById('completeModalTitle').textContent = `✅ 검사 완료 표기 — ${office} · ${type}`;
@@ -3233,6 +3277,7 @@
     }
 
     function cancelCompletion(key) {
+      if (!_isAdmin) { showToast('⛔ 관리자만 완료 취소를 할 수 있습니다.'); return; }
       if (!confirm('완료 표기를 취소하시겠습니까? 첨부 파일도 함께 삭제됩니다.')) return;
       delete INSPECTION_RECORDS[key];
       localStorage.setItem('inspection_records', JSON.stringify(INSPECTION_RECORDS));
@@ -3407,6 +3452,7 @@
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('loginError').style.display = 'none';
         if (_isAdmin) document.body.classList.add('is-admin');
+        if (typeof _applyAdminUI === 'function') _applyAdminUI();
       } else {
         document.getElementById('loginError').style.display = 'block';
         input.value = '';
@@ -5213,14 +5259,208 @@
     // ═══════════════════════════════════
     //  초기화
     // ═══════════════════════════════════
+    // ═══════════════════════════════════
+    //  항목 추가 모달 (관리자)
+    // ═══════════════════════════════════
+    let _addModalType = '';
+
+    const _ADD_FORMS = {
+      station: {
+        title: '➕ 자가주유소 추가',
+        fields: [
+          { id: 'office', label: '영업소명 *', type: 'text', required: true },
+          { id: 'corp', label: '법인명 *', type: 'text', required: true },
+          { id: 'hub', label: '본부', type: 'text' },
+          { id: 'branch', label: '권역', type: 'text' },
+          { id: 'address', label: '주소 *', type: 'text', required: true },
+          { id: 'phone', label: '전화번호', type: 'text' },
+          { id: 'completion_date', label: '완공검사일 (YYYY-MM-DD)', type: 'date' },
+          { id: 'last_check', label: '최근 검사일 (YYYY-MM-DD)', type: 'date' },
+          { id: 'next_check', label: '차후 검사예정일 (YYYY-MM-DD)', type: 'date' },
+          { id: 'tank_cap', label: '탱크 용량 (L)', type: 'number' },
+          { id: 'tank_count', label: '탱크 수 (기)', type: 'number' },
+          { id: 'monthly_usage', label: '월 사용량 (L)', type: 'number' },
+          { id: 'note', label: '비고', type: 'textarea' },
+        ]
+      },
+      cng: {
+        title: '➕ CNG 충전소 추가',
+        fields: [
+          { id: 'name', label: '충전소명 *', type: 'text', required: true },
+          { id: 'address', label: '주소 *', type: 'text', required: true },
+          { id: 'phone', label: '전화번호', type: 'text' },
+          { id: 'start_date', label: '개시일 (YYYY.MM.DD)', type: 'text' },
+          { id: 'complete_date', label: '완성검사일 (YYYY.MM.DD)', type: 'text' },
+          { id: 'check_period', label: '정기검사 월 (예: 6월·12월)', type: 'text' },
+          { id: 'vehicles', label: '충전대수', type: 'number' },
+        ]
+      },
+      hydrogen: {
+        title: '➕ 수소충전소 추가',
+        fields: [
+          { id: 'code', label: 'ERP 코드 *', type: 'text', required: true },
+          { id: 'name', label: '충전소명 *', type: 'text', required: true },
+          { id: 'address', label: '주소 *', type: 'text', required: true },
+          { id: 'phone', label: '전화번호', type: 'text' },
+          { id: 'partner', label: '거래처명', type: 'text' },
+          { id: 'settle', label: '정산주기 (예: 31일(1달))', type: 'text' },
+          { id: 'settle_type', label: '정산구분 (현금/카드)', type: 'text' },
+          { id: 'active', label: '사용여부', type: 'select', options: ['1:사용', '0:미사용'] },
+        ]
+      },
+      extgas: {
+        title: '➕ 외부주유소 추가',
+        fields: [
+          { id: 'code', label: 'ERP 코드 *', type: 'text', required: true },
+          { id: 'name', label: '주유소명 *', type: 'text', required: true },
+          { id: 'address', label: '주소 *', type: 'text', required: true },
+          { id: 'phone', label: '전화번호', type: 'text' },
+          { id: 'partner', label: '거래처명', type: 'text' },
+          { id: 'settle_type', label: '정산구분', type: 'select', options: ['현금:현금', '카드:카드', '현금(카드):현금(카드)'] },
+          { id: 'settle', label: '정산주기 (예: 7일(5일))', type: 'text' },
+          { id: 'active', label: '사용여부', type: 'select', options: ['1:사용', '0:미사용'] },
+        ]
+      },
+      extcng: {
+        title: '➕ 외부 CNG충전소 추가',
+        fields: [
+          { id: 'code', label: 'ERP 코드 *', type: 'text', required: true },
+          { id: 'name', label: '충전소명 *', type: 'text', required: true },
+          { id: 'address', label: '주소 *', type: 'text', required: true },
+          { id: 'phone', label: '전화번호', type: 'text' },
+          { id: 'partner', label: '거래처명', type: 'text' },
+          { id: 'settle', label: '정산주기 (예: 31일(1달))', type: 'text' },
+          { id: 'active', label: '사용여부', type: 'select', options: ['1:사용', '0:미사용'] },
+        ]
+      }
+    };
+
+    function _openAddModal(type) {
+      if (!_isAdmin) return;
+      _addModalType = type;
+      const cfg = _ADD_FORMS[type];
+      document.getElementById('addItemTitle').textContent = cfg.title;
+      document.getElementById('addItemForm').innerHTML = cfg.fields.map(f => {
+        if (f.type === 'select') {
+          const opts = f.options.map(o => {
+            const [v, l] = o.split(':');
+            return `<option value="${v}">${l}</option>`;
+          }).join('');
+          return `<div class="add-form-row"><label>${f.label}</label><select id="af_${f.id}">${opts}</select></div>`;
+        }
+        if (f.type === 'textarea') {
+          return `<div class="add-form-row"><label>${f.label}</label><textarea id="af_${f.id}"></textarea></div>`;
+        }
+        return `<div class="add-form-row"><label>${f.label}</label><input type="${f.type}" id="af_${f.id}" placeholder="${f.label.replace(' *','')}"></div>`;
+      }).join('');
+      document.getElementById('addItemOverlay').classList.add('open');
+      // 첫 필드 포커스
+      const first = document.getElementById('af_' + cfg.fields[0].id);
+      if (first) setTimeout(() => first.focus(), 100);
+    }
+
+    function _saveNewItem() {
+      const cfg = _ADD_FORMS[_addModalType];
+      // 필수값 체크
+      for (const f of cfg.fields) {
+        if (f.required) {
+          const el = document.getElementById('af_' + f.id);
+          if (!el || !el.value.trim()) {
+            showToast(`⚠️ "${f.label.replace(' *','')}"은 필수 입력입니다.`);
+            el && el.focus();
+            return;
+          }
+        }
+      }
+      // 값 수집
+      const item = {};
+      cfg.fields.forEach(f => {
+        const el = document.getElementById('af_' + f.id);
+        if (!el) return;
+        let v = el.value.trim();
+        if (f.type === 'number') v = v ? Number(v) : null;
+        if (f.id === 'active') v = Number(v);
+        item[f.id] = v;
+      });
+
+      // 타입별 처리
+      const lsKey = { station: '_kdAddedStations', cng: '_kdAddedCNG', hydrogen: '_kdAddedHydrogen', extgas: '_kdAddedExtGas', extcng: '_kdAddedExtCNG' }[_addModalType];
+      const stored = JSON.parse(localStorage.getItem(lsKey) || '[]');
+
+      // 배열에 push (const 배열 직접 변이 가능)
+      if (_addModalType === 'station') {
+        item.num = STATIONS.length + 1;
+        item.type = 'diesel';
+        STATIONS.push(item);
+        generateSchedules();
+      } else if (_addModalType === 'cng') {
+        item.num = CNG_STATIONS.length + 1;
+        item.vehicles = item.vehicles || 0;
+        item.vehicle_corps = {};
+        item.routes = [];
+        item.lat = 0; item.lng = 0;
+        CNG_STATIONS.push(item);
+      } else if (_addModalType === 'hydrogen') {
+        item.type = '수소충전소';
+        HYDROGEN_STATIONS.push(item);
+      } else if (_addModalType === 'extgas') {
+        item.type = '현금(카드)주유소';
+        EXT_GAS_STATIONS.push(item);
+      } else if (_addModalType === 'extcng') {
+        item.type = '외부충전소';
+        EXT_CNG_STATIONS.push(item);
+      }
+
+      stored.push(item);
+      localStorage.setItem(lsKey, JSON.stringify(stored));
+      document.getElementById('addItemOverlay').classList.remove('open');
+
+      // 재렌더
+      const rerender = {
+        station: () => { renderDashboard(); renderStations(); renderFullSchedule(); },
+        cng: renderCNG,
+        hydrogen: renderHydrogen,
+        extgas: renderExtGas,
+        extcng: () => { renderExtCngList(); if (document.getElementById('extCngSection').style.display === 'none') toggleExtCngSection(); }
+      }[_addModalType];
+      if (rerender) rerender();
+      showToast('✅ 항목이 추가되었습니다.');
+    }
+
+    // ── 관리자 버튼 표시 제어 ──
+    function _applyAdminUI() {
+      const addBtns = document.querySelectorAll('.btn-add-item');
+      addBtns.forEach(b => b.style.display = _isAdmin ? 'inline-block' : 'none');
+    }
+
     window.addEventListener('DOMContentLoaded', function () {
+      // localStorage에 저장된 추가 항목을 배열에 병합
+      JSON.parse(localStorage.getItem('_kdAddedStations') || '[]').forEach(s => STATIONS.push(s));
+      JSON.parse(localStorage.getItem('_kdAddedCNG') || '[]').forEach(s => CNG_STATIONS.push(s));
+      JSON.parse(localStorage.getItem('_kdAddedHydrogen') || '[]').forEach(s => HYDROGEN_STATIONS.push(s));
+      JSON.parse(localStorage.getItem('_kdAddedExtGas') || '[]').forEach(s => EXT_GAS_STATIONS.push(s));
+      JSON.parse(localStorage.getItem('_kdAddedExtCNG') || '[]').forEach(s => EXT_CNG_STATIONS.push(s));
+
       _initLogin();
+      _applyAdminUI();
       initCorpFilter();
       renderDashboard();
       renderStations();
       renderFullSchedule();
     });
   </script>
+
+  <!-- ── 항목 추가 모달 ── -->
+  <div id="addItemOverlay">
+    <div id="addItemBox">
+      <h2 id="addItemTitle">➕ 새 항목 추가</h2>
+      <div id="addItemForm"></div>
+      <div class="add-form-btns">
+        <button class="btn-save" onclick="_saveNewItem()">💾 저장</button>
+        <button class="btn-cancel" onclick="document.getElementById('addItemOverlay').classList.remove('open')">취소</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
